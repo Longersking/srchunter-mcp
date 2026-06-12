@@ -10,7 +10,7 @@
 | 会话 | 负责人 | 模块 | 文件 | 状态 |
 |------|--------|------|------|------|
 | **A** | Claude (当前) | Recon + Report + Engine | `recon.py`, `report.py`, `server.py`, `executor.py`, `cache.py`, `validators.py` | ✅ 6/6 Tool 完成 |
-| **B** | Claude | 指纹识别 | `fingerprint.py` | 🔄 进行中 |
+| **B** | Claude | 指纹识别 | `fingerprint.py` | ✅ 3/3 Tool 完成 |
 | **C** | Claude | 漏洞检测 | `vuln.py` | 🔄 进行中 |
 
 ---
@@ -51,7 +51,34 @@
 
 ## 会话 B — 详细记录
 
-> ⏳ 等待 B 会话提交后填写
+### 2026-06-12
+
+#### Commit — v0.2.1: Fingerprint 三 Tool 完成
+- 新建 `src/srchunter/tools/fingerprint.py`（~600 行），纯 Python 实现
+- **tech_detect**：HTTP 响应分析（Server/X-Powered-By/Set-Cookie）+ HTML 脚本/元标签/生成器解析
+  - 33 个服务器签名（nginx/apache/iis/cloudflare/gws/caddy…）
+  - 17 个 JS 库模式（jQuery/React/Vue/Angular/Bootstrap/Next.js/Nuxt.js…）
+  - 10 个 CMS 元生成器（WordPress/Drupal/Joomla/Hugo/Gatsby…）
+  - 9 个 Cookie 检测（PHPSESSID/JSESSIONID/.AspNet./laravel_session…）
+  - 7 个 X-Powered-By 模式 + CDN 头检测
+  - 置信度：high（≥4 指标）/ medium（≥2）/ low
+- **fingerprint_services**：TCP 横幅抓取 + 服务识别
+  - 30+ 服务签名（SSH/HTTP/MySQL/PostgreSQL/Redis/MongoDB/FTP/SMTP/RDP/VNC…）
+  - Web 端口特殊处理：发送最小化 HTTP GET 抓取 Server 头
+  - 端口→服务回退映射（50+ 常见端口）
+  - CPE 输出（`cpe:/a:openssh:openssh:8.9`）
+- **identify_waf**：WAF/CDN 检测
+  - 22 个 WAF 签名（Cloudflare/Akamai/AWS/Fastly/Sucuri/Imperva/F5/FortiWeb/ModSecurity/NAXSI/Wallarm…）
+  - 检测维度：header_name / header_value / cookie / body / status
+  - 最佳匹配算法（最多指标 + 最高置信度）
+  - 各 WAF 绕过建议中文提示
+- **server.py** 更新：注册 FINGERPRINT_TOOLS + dispatch_fingerprint_tool 路由
+- **测试**：`tests/test_fingerprint.py`（46 个测试）
+  - 离线解析测试：7 服务器 + 6 JS + 3 CMS + 5 Cookie + 4 X-Powered-By + 3 CDN
+  - 横幅解析测试：7 个（SSH/HTTP/FTP/空横幅/MySQL/SMTP）
+  - Dispatch 测试：tech_detect + identify_waf + fingerprint_services + 错误处理
+  - Tool 定义测试：schema 完整性 + 3 个 Tool 名称验证
+- 全量测试：92 passed + 1 skipped
 
 ---
 
@@ -109,7 +136,7 @@ src/srchunter/
 │   ├── __init__.py
 │   ├── recon.py           # subdomain_enum / resolve_targets / port_scan / http_probe
 │   ├── report.py          # analyze_surface / generate_report
-│   ├── fingerprint.py     # ⬜ B 会话待提交
+│   ├── fingerprint.py     # ✅ B 会话已完成
 │   └── vuln.py            # ⬜ C 会话待提交
 ├── engine/
 │   ├── __init__.py

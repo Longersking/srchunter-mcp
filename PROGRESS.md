@@ -29,9 +29,9 @@
 
 | ID | 需求 | 状态 |
 |----|------|------|
-| R3.1 | `tech_detect` Tool — 技术栈识别 | ⬜ |
-| R3.2 | `fingerprint_services` Tool — 服务指纹 | ⬜ |
-| R3.3 | `identify_waf` Tool — WAF检测 | ⬜ |
+| R3.1 | `tech_detect` Tool — 技术栈识别 | ✅ |
+| R3.2 | `fingerprint_services` Tool — 服务指纹 | ✅ |
+| R3.3 | `identify_waf` Tool — WAF检测 | ✅ |
 
 ### Phase 4: 漏洞检测
 
