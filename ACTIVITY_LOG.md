@@ -96,6 +96,20 @@
 
 ---
 
+### 2026-06-12 — v1.0.1 合并后修复（新增会话验证）
+
+#### Commit `45de91e` — 2 bugfixes + 真 API 验证
+
+**Bug 1（阻断性）**：`server.py` 合并冲突时丢失 `all_tools: list[Tool] = []` 声明，导致 MCP Server 启动抛 NameError。补回声明。
+
+**Bug 2（数据质量）**：`_parse_crtsh_entries()` 未过滤 SAN 证书中非目标域名的条目。baidu.com 查询混入 26 个无关域名（sni.cloudflaressl.com 等）。新增 `domain` 参数 + `_belongs()` 归属校验，过滤后 739 → 713 条合法 *.baidu.com 子域名。
+
+**真 API 验证**：subdomain_enum('baidu.com') → 713 个去重子域名，覆盖百度地图/网盘/钱包/外卖/AI/云等上百个业务线。crt.sh 出现临时 502，属外部服务波动。
+
+**测试**：8 个旧测试更新签名，新增 test_unrelated_domains_filtered。133 passed, 1 skipped。
+
+---
+
 ## 已知问题 & 注意事项
 
 ### ⚠️ pip install -e 冲突
