@@ -11,7 +11,7 @@
 |------|--------|------|------|------|
 | **A** | Claude (当前) | Recon + Report + Engine | `recon.py`, `report.py`, `server.py`, `executor.py`, `cache.py`, `validators.py` | ✅ 6/6 Tool 完成 |
 | **B** | Claude | 指纹识别 | `fingerprint.py` | ✅ 3/3 Tool 完成 |
-| **C** | Claude | 漏洞检测 | `vuln.py` | 🔄 进行中 |
+| **C** | Claude | 漏洞检测 | `vuln.py` | ✅ 3/3 Tool 完成 |
 
 ---
 
@@ -84,7 +84,15 @@
 
 ## 会话 C — 详细记录
 
-> ⏳ 等待 C 会话提交后填写
+### 2026-06-12
+
+#### Commit — vuln 三 Tool 完成
+- 新建 `src/srchunter/tools/vuln.py`（~940 行），纯 Python 实现
+- **check_misconfig**：5 种检测（git_exposure/ds_store/backup/cors/directory_listing），每个独立 handler，中文修复建议
+- **run_nuclei**：10 个内置模板（git/env/config/phpinfo/debug/swagger/backup/clickjacking/HSTS/CSP），severity/template 过滤
+- **check_exploitable**：默认 disabled，硬编码载荷（XSS×4/SQLi×4/SSRF×2），反射/错误/元数据检测逻辑
+- **测试**：`tests/test_vuln.py`（40 个测试）— 安全控制/载荷注入/反射检测/常量验证/调度错误处理
+- 全量测试：132 passed + 1 skipped
 
 ---
 
@@ -112,7 +120,13 @@ python -m pytest tests/ -v
 
 ## 合并记录
 
-> ⏳ 等待 B/C 完成后，由 A 会话合并 server.py dispatch 路由
+### 2026-06-12 — v1.0.0 合并（会话 A）
+
+- 合并 B（fingerprint.py）+ C（vuln.py）→ 主仓库
+- server.py 接入全部 4 个模块 dispatch
+- 解决 B 同时编辑 server.py 导致的合并冲突
+- 全量测试：132 passed + 1 skipped
+- 文件清单更新为 12 Tool 完整版
 
 ---
 
