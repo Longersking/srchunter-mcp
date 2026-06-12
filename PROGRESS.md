@@ -1,6 +1,6 @@
 # SRC Hunter MCP Server — 项目进度
 
-## 版本：0.1.0-alpha
+## 版本：0.2.0-alpha
 
 ---
 
@@ -21,9 +21,9 @@
 
 | ID | 需求 | 状态 |
 |----|------|------|
-| R2.1 | `resolve_targets` Tool — DNS解析+CDN检测 | ⬜ |
-| R2.2 | `port_scan` Tool — 端口扫描 | ⬜ |
-| R2.3 | `http_probe` Tool — HTTP探活 | ⬜ |
+| R2.1 | `resolve_targets` Tool — DNS解析+CDN检测 | ✅ 已实现 | DNS + 22 CNAME 模式 + CF/Fastly IP 前缀 |
+| R2.2 | `port_scan` Tool — 端口扫描 | ✅ 已实现 | TCP connect，top-20/100 预设 + 自定义 |
+| R2.3 | `http_probe` Tool — HTTP探活 | ✅ 已实现 | HTTP/S 探活 + title/server/content-length |
 
 ### Phase 3: 指纹识别
 
@@ -45,8 +45,8 @@
 
 | ID | 需求 | 状态 |
 |----|------|------|
-| R5.1 | `analyze_surface` Tool | ⬜ |
-| R5.2 | `generate_report` Tool | ⬜ |
+| R5.1 | `analyze_surface` Tool | ✅ 已实现 | 关联分析 + 优先级评分 |
+| R5.2 | `generate_report` Tool | ✅ 已实现 | Markdown / JSON SRC 报告 |
 
 ---
 
@@ -73,6 +73,24 @@
 - 测试覆盖：16 passed + 1 crt.sh live passed
 - Claude Code MCP 配置已注册（`claude mcp add srchunter`），待重启会话加载
 
-**下一步：**
-- 重启 Claude Code 会话，在 Agent 对话中实际调用 subdomain_enum
-- 开始 Phase 1 LLM 理论学习
+### 2026-06-12 — v0.2.0-alpha (Recon 完整 + Report + 并行开发体系)
+
+**新建文件：**
+- `src/srchunter/tools/recon.py` — 新增 resolve_targets / port_scan / http_probe
+- `src/srchunter/tools/report.py` — analyze_surface / generate_report
+- `src/srchunter/engine/executor.py` — 外部工具执行封装（async subprocess）
+- `tests/test_recon_new.py` — 19 个新测试（CDN 检测/端口解析/调度）
+- `TOOLS_SPEC.md` — 12 Tool 接口契约，多会话并行开发规范
+- `SESSION_PROMPTS.md` — B/C 会话启动文案
+
+**A 会话（当前）已完成：**
+- Recon：4/4 Tool ✅ （subdomain_enum / resolve_targets / port_scan / http_probe）
+- Report：2/2 Tool ✅ （analyze_surface / generate_report）
+- Engine：executor.py + cache.py + validators.py
+- Server：dispatch 覆盖 6 个 Tool
+- 测试：35 passed + 1 skipped
+- GitHub：已推送，待 B/C 会话完成 fingerprint + vuln 后合并
+
+**B/C 会话进行中：**
+- B：fingerprint.py（tech_detect / fingerprint_services / identify_waf）
+- C：vuln.py（check_misconfig / run_nuclei / check_exploitable）
