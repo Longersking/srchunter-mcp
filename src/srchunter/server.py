@@ -9,7 +9,6 @@ Start with:
 from __future__ import annotations
 
 import asyncio
-import json
 import sys
 
 from mcp.server import Server
@@ -17,6 +16,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
 from .tools.recon import RECON_TOOLS, dispatch_recon_tool
+from .tools.report import REPORT_TOOLS, dispatch_report_tool
 
 
 def create_server() -> Server:
@@ -26,7 +26,13 @@ def create_server() -> Server:
     # Aggregate all tool definitions from every module.
     all_tools: list[Tool] = []
     all_tools.extend(RECON_TOOLS)
-    # Future: all_tools.extend(FINGERPRINT_TOOLS) etc.
+    all_tools.extend(REPORT_TOOLS)
+    # Future: all_tools.extend(FINGERPRINT_TOOLS)
+    # Future: all_tools.extend(VULN_TOOLS)
+
+    # Build name sets for fast dispatch lookups.
+    recon_names = {t.name for t in RECON_TOOLS}
+    report_names = {t.name for t in REPORT_TOOLS}
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
@@ -34,15 +40,11 @@ def create_server() -> Server:
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-        # Route to the correct tool module.
-        # Recon tools (Phase 1)
-        if name in {t.name for t in RECON_TOOLS}:
+        if name in recon_names:
             return await dispatch_recon_tool(name, arguments)
-
-        # Future phases go here:
-        # if name in {t.name for t in FINGERPRINT_TOOLS}:
-        #     return await dispatch_fingerprint_tool(name, arguments)
-
+        if name in report_names:
+            return await dispatch_report_tool(name, arguments)
+        # Future: fingerprint / vuln dispatch
         raise ValueError(f"unknown tool: {name!r}")
 
     return server
