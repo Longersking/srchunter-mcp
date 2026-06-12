@@ -61,6 +61,28 @@
 
 ---
 
+## 已知问题 & 注意事项
+
+### ⚠️ pip install -e 冲突
+多个会话的 `pip install -e .` 会互相覆盖 Python site-packages 中的包指针。
+**规则**：只有 A 会话（主目录 `D:/Code/srchunter-mcp`）执行 `pip install -e .`。
+B/C 会话直接通过 `PYTHONPATH` 或 `python -m pytest` 从自己的目录运行测试。
+
+### 测试运行方式（B/C 会话）
+```bash
+# B 会话 — 在自己的目录运行，不要 pip install
+cd D:/Code/srchunter-mcp-b
+set PYTHONPATH=D:/Code/srchunter-mcp-b/src
+python -m pytest tests/ -v
+
+# C 会话同理
+cd D:/Code/srchunter-mcp-c
+set PYTHONPATH=D:/Code/srchunter-mcp-c/src
+python -m pytest tests/ -v
+```
+
+---
+
 ## 合并记录
 
 > ⏳ 等待 B/C 完成后，由 A 会话合并 server.py dispatch 路由
