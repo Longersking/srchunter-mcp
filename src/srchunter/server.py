@@ -23,6 +23,7 @@ def create_server() -> Server:
     """Create and configure the SRC Hunter MCP Server — 12 tools, 4 modules."""
     server = Server("srchunter")
 
+    all_tools: list[Tool] = []
     all_tools.extend(RECON_TOOLS)        # 4: subdomain_enum, resolve_targets, port_scan, http_probe
     all_tools.extend(FINGERPRINT_TOOLS)  # 3: tech_detect, fingerprint_services, identify_waf
     all_tools.extend(VULN_TOOLS)         # 3: check_misconfig, run_nuclei, check_exploitable

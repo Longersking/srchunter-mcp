@@ -180,10 +180,21 @@ async def _fetch_crtsh(domain: str, client: httpx.AsyncClient) -> list[dict[str,
 
 def _parse_crtsh_entries(
     raw: list[dict[str, Any]],
+    domain: str,
 ) -> list[dict[str, Any]]:
-    """Extract unique subdomain entries from raw crt.sh JSON."""
+    """Extract unique subdomain entries from raw crt.sh JSON.
+
+    Only includes names that genuinely belong to *domain* — i.e. they
+    equal *domain* or end with ``.domain``.  This filters out unrelated
+    domains that appear in SAN fields of shared certificates.
+    """
     seen: set[str] = set()
     results: list[dict[str, Any]] = []
+    domain = domain.lower()
+
+    def _belongs(name: str) -> bool:
+        """True if *name* is *domain* or a subdomain of *domain*."""
+        return name == domain or name.endswith(f".{domain}")
 
     for entry in raw:
         names: set[str] = set()
@@ -200,7 +211,7 @@ def _parse_crtsh_entries(
                     names.add(name)
 
         for name in names:
-            if name not in seen and not name.startswith("*."):
+            if name not in seen and not name.startswith("*.") and _belongs(name):
                 seen.add(name)
                 results.append({"domain": name, "source": "crtsh"})
 
@@ -232,7 +243,7 @@ async def handle_subdomain_enum(arguments: dict[str, Any]) -> list[TextContent]:
         raw = await _fetch_crtsh(domain, client)
 
     elapsed = round(asyncio.get_event_loop().time() - t0, 2)
-    entries = _parse_crtsh_entries(raw)
+    entries = _parse_crtsh_entries(raw, domain)
 
     result: dict[str, Any] = {
         "query_domain": domain,

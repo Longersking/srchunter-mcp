@@ -16,12 +16,12 @@ class TestParseCrtshEntries:
     """Unit tests for crt.sh response parsing — no network needed."""
 
     def test_empty_response(self) -> None:
-        result = _parse_crtsh_entries([])
+        result = _parse_crtsh_entries([], "example.com")
         assert result == []
 
     def test_single_common_name(self) -> None:
         raw = [{"common_name": "www.example.com", "name_value": ""}]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         assert len(result) == 1
         assert result[0]["domain"] == "www.example.com"
 
@@ -32,7 +32,7 @@ class TestParseCrtshEntries:
                 "name_value": "www.example.com\nmail.example.com\ndev.example.com",
             }
         ]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         domains = {r["domain"] for r in result}
         assert "example.com" in domains
         assert "www.example.com" in domains
@@ -47,7 +47,7 @@ class TestParseCrtshEntries:
             {"common_name": "api.example.com"},
             {"name_value": "api.example.com\ncdn.example.com"},
         ]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         domains = [r["domain"] for r in result]
         assert domains == ["api.example.com", "cdn.example.com"]
 
@@ -55,17 +55,17 @@ class TestParseCrtshEntries:
         """Wildcard entries (*.example.com) represent a set of names,
         not a concrete host, so we skip them."""
         raw = [{"common_name": "*.example.com"}]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         assert result == []
 
     def test_casing_normalised(self) -> None:
         raw = [{"common_name": "WWW.Example.COM"}]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         assert result[0]["domain"] == "www.example.com"
 
     def test_whitespace_stripped(self) -> None:
         raw = [{"name_value": "  admin.example.com  \n  "}]
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         assert len(result) == 1
         assert result[0]["domain"] == "admin.example.com"
 
@@ -73,8 +73,25 @@ class TestParseCrtshEntries:
         """Entries without common_name or name_value should be skipped
         gracefully."""
         raw = [{"issuer": "Let's Encrypt"}]  # no domain fields
-        result = _parse_crtsh_entries(raw)
+        result = _parse_crtsh_entries(raw, "example.com")
         assert result == []
+
+    def test_unrelated_domains_filtered(self) -> None:
+        """Domains not belonging to the target should be filtered out.
+
+        crt.sh returns SAN entries that may include names from other
+        organisations that share a CDN or TLS certificate.
+        """
+        raw = [
+            {"common_name": "www.example.com"},
+            {"name_value": "www.example.com\nsni.cloudflaressl.com\ncdn.other.org"},
+        ]
+        result = _parse_crtsh_entries(raw, "example.com")
+        domains = {r["domain"] for r in result}
+        assert "www.example.com" in domains
+        assert "sni.cloudflaressl.com" not in domains
+        assert "cdn.other.org" not in domains
+        assert len(result) == 1
 
 
 # ---------------------------------------------------------------
