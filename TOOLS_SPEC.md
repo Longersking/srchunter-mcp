@@ -16,7 +16,7 @@
 4. **Tool 定义**放在各自模块的 `*_TOOLS` 常量中，格式：
    ```python
    MODULE_TOOLS = [
-       Tool(
+       Tool( 
            name="tool_name",
            description="...",
            inputSchema={
